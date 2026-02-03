@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PayFlow - AI-Powered Invoice Payments",
   description: "Upload an invoice, AI extracts details, pay cross-chain with one click.",
+  icons: {
+    icon: "/logo-simple.svg",
+    apple: "/logo-simple.svg",
+  },
 };
 
 export default function RootLayout({

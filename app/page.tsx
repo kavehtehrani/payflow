@@ -2,6 +2,7 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -15,6 +16,17 @@ export default function Home() {
       <div className="pointer-events-none absolute top-20 -right-40 h-[300px] w-[400px] rounded-full bg-accent/15 blur-3xl" />
 
       <div className="relative mx-auto max-w-2xl text-center space-y-8">
+        <div className="flex justify-center">
+          <Image
+            src="/logo-with-text.svg"
+            alt="PayFlow"
+            width={160}
+            height={160}
+            className="h-40 w-40"
+            priority
+          />
+        </div>
+
         <div className="inline-block rounded-full border border-border bg-muted/50 px-4 py-1.5 text-xs font-medium text-muted-foreground">
           AI-powered cross-chain payments
         </div>

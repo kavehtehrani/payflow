@@ -13,6 +13,12 @@
             <stop offset="100%" style="stop-color:#D946EF"/>
         </linearGradient>
 
+        <!-- Purple gradient for text -->
+        <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#8B5CF6"/>
+            <stop offset="100%" style="stop-color:#D946EF"/>
+        </linearGradient>
+
         <!-- Glow filter -->
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
@@ -74,12 +80,10 @@
     <circle cx="130" cy="240" r="3" fill="#D946EF" opacity="0.7"/>
     <circle cx="270" cy="240" r="3" fill="#06B6D4" opacity="0.7"/>
 
-    <!-- Text integrated into circle border - larger -->
+    <!-- Text integrated into circle border -->
     <g filter="url(#textGlow)">
-        <text font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" letter-spacing="2">
-            <textPath href="#textArc" startOffset="50%" text-anchor="middle">
-                <tspan fill="#D946EF">p</tspan><tspan fill="#06B6D4">ai</tspan><tspan fill="#D946EF">flow</tspan>
-            </textPath>
+        <text font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" letter-spacing="2" fill="url(#purpleGradient)">
+            <textPath href="#textArc" startOffset="50%" text-anchor="middle">payflow</textPath>
         </text>
     </g>
 </svg>

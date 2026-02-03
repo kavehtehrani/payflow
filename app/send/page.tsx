@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
+import { createPublicClient, http, normalize } from "viem";
+import { mainnet } from "viem/chains";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +20,12 @@ import {
   buildApprovalTx,
   type WalletTokenBalance,
 } from "@/lib/lifi";
+
+// ENS resolution client (mainnet only)
+const ensClient = createPublicClient({
+  chain: mainnet,
+  transport: http("https://eth.drpc.org"),
+});
 
 // Common tokens for receiving (can be different from what user has)
 const RECEIVE_TOKENS = [
@@ -90,6 +98,8 @@ export default function SendPage() {
   // Form state
   const [selectedBalance, setSelectedBalance] = useState<WalletTokenBalance | null>(null);
   const [toAddress, setToAddress] = useState("");
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
+  const [resolvingEns, setResolvingEns] = useState(false);
   const [toChainId, setToChainId] = useState<number>(8453); // Default to Base
   const [toTokenSymbol, setToTokenSymbol] = useState("USDC");
   const [amount, setAmount] = useState("");

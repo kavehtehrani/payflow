@@ -3,6 +3,7 @@
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -63,7 +64,14 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-lg font-bold tracking-tight">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <Image
+              src="/logo-simple.svg"
+              alt="PayFlow"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               PayFlow
             </span>
