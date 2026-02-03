@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useWallets } from "@privy-io/react-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TokenIcon, ChainIcon } from "@/components/TokenIcon";
 import { SUPPORTED_CHAINS } from "@/lib/chains";
 import { getWalletBalances, getChainDisplayName, formatTokenAmount, type WalletTokenBalance } from "@/lib/lifi";
 
@@ -76,10 +77,12 @@ export default function WalletBalance() {
           <div className="space-y-2">
             {balances.slice(0, 10).map((b, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
-                <div>
+                <div className="flex items-center gap-2">
+                  <TokenIcon symbol={b.symbol} address={b.address} size={20} />
                   <span className="font-medium">{b.symbol}</span>
-                  <span className="ml-2 text-muted-foreground text-xs">
-                    on {getChainDisplayName(b.chainId)}
+                  <span className="text-muted-foreground text-xs flex items-center gap-1">
+                    <ChainIcon chainId={b.chainId} size={12} />
+                    {getChainDisplayName(b.chainId)}
                   </span>
                 </div>
                 <span className="font-mono">

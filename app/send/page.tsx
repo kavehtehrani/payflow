@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TokenIcon, ChainIcon } from "@/components/TokenIcon";
+import { TokenSelect, ChainSelect } from "@/components/ui/token-select";
 import { SUPPORTED_CHAINS } from "@/lib/chains";
 import {
   getWalletBalances,
@@ -98,6 +100,7 @@ export default function SendPage() {
 
   // Form state
   const [selectedBalance, setSelectedBalance] = useState<WalletTokenBalance | null>(null);
+  const [showTokenPicker, setShowTokenPicker] = useState(false);
   const [toAddress, setToAddress] = useState("");
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const [resolvingEns, setResolvingEns] = useState(false);
@@ -416,78 +419,148 @@ export default function SendPage() {
   if (!ready || !authenticated) return null;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-xl px-4 py-6 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Send</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Send any token to anyone on any chain. We handle the swap and bridge.
+        <h1 className="text-xl font-bold">Send</h1>
+        <p className="text-sm text-muted-foreground">
+          Send any token to anyone on any chain.
         </p>
       </div>
 
       {/* Source Token Selection */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">From</CardTitle>
-          <CardDescription>Select which token to send from</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           {loadingBalances ? (
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16 hidden sm:block" />
+              <Skeleton className="h-16 hidden lg:block" />
             </div>
           ) : balances.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               No tokens found. Fund your wallet to send.
             </p>
           ) : (
-            <div className="grid gap-2">
-              {balances.map((b, i) => (
+            <>
+              {/* Mobile: Dropdown style */}
+              <div className="sm:hidden">
                 <button
-                  key={i}
-                  onClick={() => setSelectedBalance(b)}
-                  className={`flex items-center justify-between p-3 rounded-lg border transition-colors text-left ${
-                    selectedBalance?.address === b.address && selectedBalance?.chainId === b.chainId
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50 hover:bg-muted/50"
-                  }`}
+                  onClick={() => setShowTokenPicker(!showTokenPicker)}
+                  className="w-full flex items-center justify-between p-3 rounded-lg border border-border bg-background"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                      {b.symbol.slice(0, 2)}
-                    </div>
-                    <div>
-                      <div className="font-medium">{b.symbol}</div>
-                      <div className="text-xs text-muted-foreground">
-                        on {getChainName(b.chainId)}
+                  {selectedBalance ? (
+                    <div className="flex items-center gap-3">
+                      <TokenIcon symbol={selectedBalance.symbol} address={selectedBalance.address} size={28} />
+                      <div className="text-left">
+                        <div className="font-medium text-sm">{selectedBalance.symbol}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <ChainIcon chainId={selectedBalance.chainId} size={10} />
+                          {getChainName(selectedBalance.chainId)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono text-sm">
-                      {formatTokenAmount(b.amount, b.decimals)}
-                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">Select token</span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {selectedBalance && (
+                      <span className="font-mono text-sm">
+                        {formatTokenAmount(selectedBalance.amount, selectedBalance.decimals)}
+                      </span>
+                    )}
+                    <svg
+                      className={`h-4 w-4 text-muted-foreground transition-transform ${showTokenPicker ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </button>
-              ))}
-            </div>
+                {showTokenPicker && (
+                  <div className="mt-2 space-y-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-background p-1">
+                    {balances.map((b, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setSelectedBalance(b);
+                          setShowTokenPicker(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-md text-left transition-colors ${
+                          selectedBalance?.address === b.address && selectedBalance?.chainId === b.chainId
+                            ? "bg-primary/10"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <TokenIcon symbol={b.symbol} address={b.address} size={24} />
+                          <div>
+                            <div className="font-medium text-sm">{b.symbol}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <ChainIcon chainId={b.chainId} size={10} />
+                              {getChainName(b.chainId)}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="font-mono text-xs">
+                          {formatTokenAmount(b.amount, b.decimals)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop: Compact grid */}
+              <div className="hidden sm:grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {balances.map((b, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedBalance(b)}
+                    className={`flex items-center gap-2 p-2.5 rounded-lg border transition-colors text-left ${
+                      selectedBalance?.address === b.address && selectedBalance?.chainId === b.chainId
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    }`}
+                  >
+                    <TokenIcon symbol={b.symbol} address={b.address} size={28} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-medium text-sm">{b.symbol}</span>
+                        <span className="font-mono text-xs truncate">
+                          {formatTokenAmount(b.amount, b.decimals)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <ChainIcon chainId={b.chainId} size={10} />
+                        {getChainName(b.chainId)}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Amount Input */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="text-base">Amount</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
           <div className="flex gap-2">
             <Input
               type="number"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="text-lg font-mono"
+              className="font-mono"
             />
             {selectedBalance && (
               <Button
@@ -504,9 +577,8 @@ export default function SendPage() {
             )}
           </div>
           {selectedBalance && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Available: {formatTokenAmount(selectedBalance.amount, selectedBalance.decimals)}{" "}
-              {selectedBalance.symbol}
+            <p className="text-xs text-muted-foreground">
+              Available: {formatTokenAmount(selectedBalance.amount, selectedBalance.decimals)} {selectedBalance.symbol}
             </p>
           )}
         </CardContent>
@@ -514,19 +586,17 @@ export default function SendPage() {
 
       {/* Recipient */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           <CardTitle className="text-base">To</CardTitle>
-          <CardDescription>Recipient address and what they receive</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           <div>
-            <Label htmlFor="toAddress">Recipient Address</Label>
             <Input
               id="toAddress"
               placeholder="0x... or vitalik.eth"
               value={toAddress}
               onChange={(e) => setToAddress(e.target.value)}
-              className="font-mono mt-1"
+              className="font-mono"
             />
             {resolvingEns && (
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -546,34 +616,34 @@ export default function SendPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Destination Chain</Label>
-              <select
-                value={toChainId}
-                onChange={(e) => setToChainId(Number(e.target.value))}
-                className="w-full mt-1 h-10 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {Object.values(SUPPORTED_CHAINS).map((chain) => (
-                  <option key={chain.id} value={chain.id}>
-                    {chain.displayName}
-                  </option>
-                ))}
-              </select>
+              <Label className="text-xs">Chain</Label>
+              <div className="mt-1">
+                <ChainSelect
+                  value={toChainId}
+                  onChange={setToChainId}
+                  options={Object.values(SUPPORTED_CHAINS).map((chain) => ({
+                    value: chain.id,
+                    label: chain.displayName,
+                    chainId: chain.id,
+                  }))}
+                />
+              </div>
             </div>
             <div>
-              <Label>Receive Token</Label>
-              <select
-                value={toTokenSymbol}
-                onChange={(e) => setToTokenSymbol(e.target.value)}
-                className="w-full mt-1 h-10 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {RECEIVE_TOKENS.map((token) => (
-                  <option key={token.symbol} value={token.symbol}>
-                    {token.symbol}
-                  </option>
-                ))}
-              </select>
+              <Label className="text-xs">Token</Label>
+              <div className="mt-1">
+                <TokenSelect
+                  value={toTokenSymbol}
+                  onChange={setToTokenSymbol}
+                  options={RECEIVE_TOKENS.map((token) => ({
+                    value: token.symbol,
+                    label: token.symbol,
+                    symbol: token.symbol,
+                  }))}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -582,24 +652,25 @@ export default function SendPage() {
       {/* Quote Preview */}
       {(loadingQuote || quote || quoteError) && (
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-base">Quote</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingQuote ? (
-              <div className="flex items-center gap-2 py-4">
+              <div className="flex items-center gap-2 py-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <span className="text-sm text-muted-foreground">Finding best route...</span>
               </div>
             ) : quoteError ? (
-              <div className="py-4 text-center">
+              <div className="py-2 text-center">
                 <p className="text-sm text-destructive">{quoteError}</p>
               </div>
             ) : quote ? (
-              <div className="space-y-3">
+              <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Recipient receives</span>
-                  <span className="font-mono font-medium">
+                  <span className="text-muted-foreground">Receives</span>
+                  <span className="font-mono font-medium flex items-center gap-1">
+                    <TokenIcon symbol={quote.action.toToken.symbol} size={14} />
                     {(parseFloat(quote.estimate.toAmountMin) / 10 ** quote.action.toToken.decimals).toFixed(
                       quote.action.toToken.decimals > 8 ? 6 : 2
                     )}{" "}
@@ -607,14 +678,13 @@ export default function SendPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Route</span>
-                  <Badge variant="outline">{quote.tool}</Badge>
+                  <span className="text-muted-foreground">Route</span>
+                  <Badge variant="outline" className="text-xs">{quote.tool}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Estimated fees</span>
-                  <span className="text-sm">
-                    $
-                    {(
+                  <span className="text-muted-foreground">Fees</span>
+                  <span>
+                    ${(
                       quote.estimate.feeCosts.reduce((sum, f) => sum + parseFloat(f.amountUSD || "0"), 0) +
                       quote.estimate.gasCosts.reduce((sum, g) => sum + parseFloat(g.amountUSD || "0"), 0)
                     ).toFixed(2)}
@@ -622,8 +692,8 @@ export default function SendPage() {
                 </div>
                 {quote.estimate.executionDuration > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Est. time</span>
-                    <span className="text-sm">~{Math.ceil(quote.estimate.executionDuration / 60)} min</span>
+                    <span className="text-muted-foreground">Time</span>
+                    <span>~{Math.ceil(quote.estimate.executionDuration / 60)} min</span>
                   </div>
                 )}
               </div>

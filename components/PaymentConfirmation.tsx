@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { TokenIcon } from "@/components/TokenIcon";
 import type { ParsedInvoice } from "@/lib/types";
 import type { QuoteDisplay } from "@/app/upload/page";
 
@@ -48,7 +49,8 @@ export default function PaymentConfirmation({
           )}
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Amount</span>
-            <span className="font-medium">
+            <span className="font-medium flex items-center gap-1">
+              <TokenIcon symbol={invoice.token || "ETH"} size={16} />
               {invoice.amount} {invoice.token}
             </span>
           </div>
@@ -75,19 +77,22 @@ export default function PaymentConfirmation({
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">You send</span>
-              <span className="font-medium">
+              <span className="font-medium flex items-center gap-1">
+                <TokenIcon symbol={quote.fromToken} size={16} />
                 {quote.fromAmount} {quote.fromToken}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">They receive</span>
-              <span className="font-medium">
+              <span className="font-medium flex items-center gap-1">
+                <TokenIcon symbol={quote.toToken} size={16} />
                 {quote.toAmount} {quote.toToken}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Minimum received</span>
-              <span>
+              <span className="flex items-center gap-1">
+                <TokenIcon symbol={quote.toToken} size={16} />
                 {quote.toAmountMin} {quote.toToken}
               </span>
             </div>

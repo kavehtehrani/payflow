@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TokenSelect, ChainSelect } from "@/components/ui/token-select";
 import { SUPPORTED_CHAINS, SUPPORTED_TOKENS } from "@/lib/chains";
 import type { ParsedInvoice } from "@/lib/types";
 
@@ -89,34 +90,31 @@ export default function InvoicePreview({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="token">Token</Label>
-            <select
-              id="token"
-              value={edited.token}
-              onChange={(e) => update("token", e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {Object.keys(SUPPORTED_TOKENS).map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <Label>Token</Label>
+            <TokenSelect
+              value={edited.token || "USDC"}
+              onChange={(val) => update("token", val)}
+              options={Object.keys(SUPPORTED_TOKENS).map((t) => ({
+                value: t,
+                label: t,
+                symbol: t,
+              }))}
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="chain">Chain</Label>
-            <select
-              id="chain"
-              value={edited.chain}
-              onChange={(e) => update("chain", e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {Object.values(SUPPORTED_CHAINS).map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.displayName}
-                </option>
-              ))}
-            </select>
+            <Label>Chain</Label>
+            <ChainSelect
+              value={SUPPORTED_CHAINS[edited.chain as keyof typeof SUPPORTED_CHAINS]?.id || 1}
+              onChange={(chainId) => {
+                const chain = Object.values(SUPPORTED_CHAINS).find((c) => c.id === chainId);
+                if (chain) update("chain", chain.name);
+              }}
+              options={Object.values(SUPPORTED_CHAINS).map((c) => ({
+                value: c.id,
+                label: c.displayName,
+                chainId: c.id,
+              }))}
+            />
           </div>
         </div>
 
