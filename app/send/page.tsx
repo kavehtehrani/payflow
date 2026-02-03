@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { createPublicClient, http, normalize } from "viem";
+import { createPublicClient, http } from "viem";
+import { normalize } from "viem/ens";
 import { mainnet } from "viem/chains";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -144,17 +145,47 @@ export default function SendPage() {
     if (walletAddress) fetchBalances();
   }, [walletAddress, fetchBalances]);
 
+  // Resolve ENS names
+  useEffect(() => {
+    const resolveAddress = async () => {
+      // Check if it's already a valid hex address
+      if (/^0x[a-fA-F0-9]{40}$/.test(toAddress)) {
+        setResolvedAddress(toAddress);
+        return;
+      }
+
+      // Check if it looks like an ENS name
+      if (toAddress.includes(".")) {
+        setResolvingEns(true);
+        try {
+          const resolved = await ensClient.getEnsAddress({
+            name: normalize(toAddress),
+          });
+          setResolvedAddress(resolved);
+        } catch (err) {
+          console.error("ENS resolution failed:", err);
+          setResolvedAddress(null);
+        } finally {
+          setResolvingEns(false);
+        }
+      } else {
+        setResolvedAddress(null);
+      }
+    };
+
+    const timer = setTimeout(resolveAddress, 300);
+    return () => clearTimeout(timer);
+  }, [toAddress]);
+
   // Get quote when form changes
   const getQuote = useCallback(async () => {
-    if (!selectedBalance || !toAddress || !amount || !walletAddress) {
+    if (!selectedBalance || !resolvedAddress || !amount || !walletAddress) {
       setQuote(null);
       return;
     }
 
-    // Validate toAddress is a valid Ethereum address
-    const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(toAddress);
-    if (!isValidAddress) {
-      // Don't show error for partial input, just don't fetch quote
+    // Validate resolved address
+    if (!/^0x[a-fA-F0-9]{40}$/.test(resolvedAddress)) {
       setQuote(null);
       return;
     }
@@ -197,7 +228,7 @@ export default function SendPage() {
           toToken: toTokenAddress,
           fromAmount: fromAmountWei,
           fromAddress: walletAddress,
-          toAddress,
+          toAddress: resolvedAddress,
         }),
       });
 
@@ -215,7 +246,7 @@ export default function SendPage() {
     } finally {
       setLoadingQuote(false);
     }
-  }, [selectedBalance, toAddress, toChainId, toTokenSymbol, amount, walletAddress]);
+  }, [selectedBalance, resolvedAddress, toChainId, toTokenSymbol, amount, walletAddress]);
 
   // Debounced quote fetching
   useEffect(() => {
@@ -492,11 +523,27 @@ export default function SendPage() {
             <Label htmlFor="toAddress">Recipient Address</Label>
             <Input
               id="toAddress"
-              placeholder="0x... or ENS name"
+              placeholder="0x... or vitalik.eth"
               value={toAddress}
               onChange={(e) => setToAddress(e.target.value)}
               className="font-mono mt-1"
             />
+            {resolvingEns && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <span className="h-3 w-3 animate-spin rounded-full border border-muted-foreground border-t-transparent" />
+                Resolving ENS name...
+              </p>
+            )}
+            {!resolvingEns && toAddress.includes(".") && resolvedAddress && (
+              <p className="text-xs text-green-600 mt-1">
+                Resolved: {resolvedAddress.slice(0, 6)}...{resolvedAddress.slice(-4)}
+              </p>
+            )}
+            {!resolvingEns && toAddress.includes(".") && !resolvedAddress && toAddress.length > 3 && (
+              <p className="text-xs text-destructive mt-1">
+                Could not resolve ENS name
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
