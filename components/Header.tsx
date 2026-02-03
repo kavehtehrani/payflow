@@ -46,6 +46,7 @@ function AuthSection() {
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/send", label: "Send" },
   { href: "/upload", label: "Pay Invoice" },
   { href: "/generate", label: "Generate" },
 ];

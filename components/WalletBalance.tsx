@@ -27,10 +27,12 @@ export default function WalletBalance() {
       setLoading(true);
       try {
         const chainIds = Object.values(SUPPORTED_CHAINS).map((c) => c.id);
+        console.log("[WalletBalance] Fetching for address:", walletAddress, "chains:", chainIds);
         const result = await getWalletBalances(walletAddress!, chainIds);
+        console.log("[WalletBalance] Got balances:", result);
         if (!cancelled) setBalances(result);
-      } catch {
-        // Silently fail - balances are informational
+      } catch (err) {
+        console.error("[WalletBalance] Error fetching balances:", err);
       } finally {
         if (!cancelled) setLoading(false);
       }
