@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { TokenSelect, ChainSelect } from "@/components/ui/token-select";
 import { SUPPORTED_CHAINS, SUPPORTED_TOKENS } from "@/lib/chains";
 import InvoicePDF from "./InvoicePDF";
 
@@ -185,34 +186,31 @@ export default function InvoiceGenerator({ onGenerated }: InvoiceGeneratorProps)
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="token">Token</Label>
-              <select
-                id="token"
+              <Label>Token</Label>
+              <TokenSelect
                 value={form.token}
-                onChange={(e) => update("token", e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {Object.keys(SUPPORTED_TOKENS).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => update("token", value)}
+                options={Object.keys(SUPPORTED_TOKENS).map((t) => ({
+                  value: t,
+                  label: t,
+                  symbol: t,
+                }))}
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="chain">Chain</Label>
-              <select
-                id="chain"
-                value={form.chain}
-                onChange={(e) => update("chain", e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {Object.values(SUPPORTED_CHAINS).map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.displayName}
-                  </option>
-                ))}
-              </select>
+              <Label>Chain</Label>
+              <ChainSelect
+                value={Object.values(SUPPORTED_CHAINS).find((c) => c.name === form.chain)?.id || 8453}
+                onChange={(chainId) => {
+                  const chain = Object.values(SUPPORTED_CHAINS).find((c) => c.id === chainId);
+                  if (chain) update("chain", chain.name);
+                }}
+                options={Object.values(SUPPORTED_CHAINS).map((c) => ({
+                  value: c.id,
+                  label: c.displayName,
+                  chainId: c.id,
+                }))}
+              />
             </div>
           </div>
 

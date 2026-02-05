@@ -592,42 +592,6 @@ function SendPageContent() {
         </div>
       </fieldset>
 
-      {/* Amount Input */}
-      <fieldset className="relative rounded-lg border border-border p-4 pt-3">
-        <legend className="px-2 text-sm font-medium text-muted-foreground">
-          Amount
-        </legend>
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="font-mono"
-            />
-            {selectedBalance && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setAmount(
-                    (parseFloat(selectedBalance.amount) / 10 ** selectedBalance.decimals).toString()
-                  )
-                }
-              >
-                Max
-              </Button>
-            )}
-          </div>
-          {selectedBalance && (
-            <p className="text-xs text-muted-foreground">
-              Available: {formatTokenAmount(selectedBalance.amount, selectedBalance.decimals)} {selectedBalance.symbol}
-            </p>
-          )}
-        </div>
-      </fieldset>
-
       {/* Recipient */}
       <fieldset className="relative rounded-lg border border-border p-4 pt-3">
         <legend className="px-2 text-sm font-medium text-muted-foreground">
@@ -690,6 +654,42 @@ function SendPageContent() {
               </div>
             </div>
           </div>
+        </div>
+      </fieldset>
+
+      {/* Amount Input */}
+      <fieldset className="relative rounded-lg border border-border p-4 pt-3">
+        <legend className="px-2 text-sm font-medium text-muted-foreground">
+          Amount ({toTokenSymbol})
+        </legend>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="font-mono"
+            />
+            {selectedBalance && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setAmount(
+                    (parseFloat(selectedBalance.amount) / 10 ** selectedBalance.decimals).toString()
+                  )
+                }
+              >
+                Max
+              </Button>
+            )}
+          </div>
+          {selectedBalance && (
+            <p className="text-xs text-muted-foreground">
+              Available: {formatTokenAmount(selectedBalance.amount, selectedBalance.decimals)} {selectedBalance.symbol}
+            </p>
+          )}
         </div>
       </fieldset>
 

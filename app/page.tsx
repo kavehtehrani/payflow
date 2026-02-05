@@ -91,8 +91,7 @@ export default function Home() {
             </div>
             <h3 className="font-semibold">Smart Parsing</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Upload a PDF, image, or paste text. Gemini extracts recipient,
-              amount, token, and chain automatically.
+              Use the chatbot say "send 10 USDC to vitalik.eth" or upload a PDF, image, or paste text. We'll take care of the rest.
             </p>
           </div>
           <div className="rounded-xl border border-border bg-card p-6 space-y-3">
@@ -111,7 +110,7 @@ export default function Home() {
             </div>
             <h3 className="font-semibold">ENS Native</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Invoices with ENS names like vitalik.eth are resolved to wallet
+              Invoices with ENS names are resolved to wallet
               addresses on the fly.
             </p>
           </div>

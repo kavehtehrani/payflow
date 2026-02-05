@@ -7,7 +7,6 @@ import { normalize } from "viem/ens";
 import { mainnet } from "viem/chains";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { TokenIcon, ChainIcon } from "@/components/TokenIcon";
 import { TokenSelect, ChainSelect } from "@/components/ui/token-select";
 import { SUPPORTED_CHAINS } from "@/lib/chains";
@@ -369,7 +368,7 @@ export function EmbeddedSendForm({ intent, onSuccess, onCancel }: EmbeddedSendFo
 
   if (!walletAddress) {
     return (
-      <div className="px-3 py-2 text-sm text-muted-foreground">
+      <div className="p-3 text-sm text-muted-foreground">
         Connect your wallet to send payments.
       </div>
     );
@@ -378,22 +377,22 @@ export function EmbeddedSendForm({ intent, onSuccess, onCancel }: EmbeddedSendFo
   // Success state
   if (txStatus === "success") {
     return (
-      <div className="px-3 py-2 space-y-1">
-        <div className="flex items-center gap-2 text-green-600 text-sm">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="p-3 space-y-2">
+        <div className="flex items-center gap-2 text-green-600">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span className="font-medium">Payment sent!</span>
+          <span className="font-medium">Transaction successful!</span>
         </div>
         {txHash && selectedBalance && (
           <a
             href={getExplorerTxUrl(selectedBalance.chainId, txHash) || "#"}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
           >
             View on explorer
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </a>
@@ -403,151 +402,187 @@ export function EmbeddedSendForm({ intent, onSuccess, onCancel }: EmbeddedSendFo
   }
 
   return (
-    <div className="px-3 py-2 space-y-2 text-sm">
-      {/* Row 1: Amount + Source token/chain */}
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          placeholder="0.00"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="font-mono h-7 text-sm w-20"
-        />
+    <div className="p-3 space-y-3">
+      {/* Send from */}
+      <fieldset className="rounded-lg border border-border p-3 pt-2">
+        <legend className="px-2 text-xs font-medium text-muted-foreground">Send from</legend>
         {loadingBalances ? (
-          <div className="h-6 w-24 bg-muted animate-pulse rounded" />
+          <div className="h-10 bg-muted animate-pulse rounded" />
         ) : balances.length > 0 ? (
-          <select
-            className="h-7 text-xs px-2 rounded border border-border bg-background flex-1 min-w-0"
-            value={selectedBalance ? `${selectedBalance.chainId}-${selectedBalance.address}` : ""}
-            onChange={(e) => {
-              const [chainId, address] = e.target.value.split("-");
-              const bal = balances.find((b) => b.chainId === parseInt(chainId) && b.address === address);
-              if (bal) setSelectedBalance(bal);
-            }}
-          >
-            {balances.map((b, i) => (
-              <option key={i} value={`${b.chainId}-${b.address}`}>
-                {b.symbol} on {getChainName(b.chainId)} ({formatTokenAmount(b.amount, b.decimals)})
-              </option>
+          <div className="flex flex-wrap gap-2">
+            {balances.slice(0, 4).map((b, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedBalance(b)}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border text-left text-sm transition-colors ${
+                  selectedBalance?.address === b.address && selectedBalance?.chainId === b.chainId
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                }`}
+              >
+                <TokenIcon symbol={b.symbol} address={b.address} size={20} />
+                <div>
+                  <div className="font-medium text-xs">{b.symbol}</div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <ChainIcon chainId={b.chainId} size={8} />
+                    {getChainName(b.chainId)}
+                  </div>
+                </div>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {formatTokenAmount(b.amount, b.decimals)}
+                </span>
+              </button>
             ))}
-          </select>
+          </div>
         ) : (
-          <span className="text-xs text-muted-foreground">No tokens</span>
+          <p className="text-sm text-muted-foreground">No tokens found</p>
         )}
-      </div>
+      </fieldset>
 
-      {/* Row 2: Recipient */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-xs">to</span>
-          <Input
-            placeholder="0x... or name.eth"
-            value={toAddress}
-            onChange={(e) => setToAddress(e.target.value)}
-            className="font-mono h-7 text-sm flex-1"
-          />
-          {resolvingEns && (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      {/* Send to */}
+      <fieldset className="rounded-lg border border-border p-3 pt-2">
+        <legend className="px-2 text-xs font-medium text-muted-foreground">Send to</legend>
+        <div className="space-y-2">
+          {/* Address row */}
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="0x... or vitalik.eth"
+              value={toAddress}
+              onChange={(e) => setToAddress(e.target.value)}
+              className="font-mono flex-1"
+            />
+            {resolvingEns && (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+            )}
+            {!resolvingEns && toAddress.length > 0 && resolvedAddress && (
+              <svg className="h-5 w-5 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {!resolvingEns && toAddress.length > 2 && !resolvedAddress && (
+              <svg className="h-5 w-5 text-destructive shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+          </div>
+          {!resolvingEns && toAddress.includes(".") && resolvedAddress && (
+            <p className="text-xs text-green-600 font-mono text-left">{resolvedAddress}</p>
           )}
-          {!resolvingEns && toAddress.length > 0 && resolvedAddress && (
-            <svg className="h-4 w-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+          {!resolvingEns && toAddress.includes(".") && toAddress.length > 3 && !resolvedAddress && (
+            <p className="text-xs text-destructive text-left">Could not resolve ENS name</p>
           )}
-          {!resolvingEns && toAddress.length > 2 && !resolvedAddress && (
-            <svg className="h-4 w-4 text-destructive shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          )}
+
+          {/* Amount + Chain + Token row - equal width columns */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="font-mono h-8 w-full"
+              />
+              {selectedBalance && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-1.5 text-xs shrink-0"
+                  onClick={() =>
+                    setAmount((parseFloat(selectedBalance.amount) / 10 ** selectedBalance.decimals).toString())
+                  }
+                >
+                  Max
+                </Button>
+              )}
+            </div>
+            <div className="w-full">
+              <ChainSelect
+                value={toChainId}
+                onChange={setToChainId}
+                options={Object.values(SUPPORTED_CHAINS).map((chain) => ({
+                  value: chain.id,
+                  label: chain.displayName,
+                  chainId: chain.id,
+                }))}
+              />
+            </div>
+            <div className="w-full">
+              <TokenSelect
+                value={toTokenSymbol}
+                onChange={setToTokenSymbol}
+                options={RECEIVE_TOKENS.map((token) => ({
+                  value: token.symbol,
+                  label: token.symbol,
+                  symbol: token.symbol,
+                }))}
+              />
+            </div>
+          </div>
         </div>
-        {!resolvingEns && toAddress.includes(".") && resolvedAddress && (
-          <p className="text-xs text-green-600 font-mono">
-            {resolvedAddress}
-          </p>
-        )}
-        {!resolvingEns && toAddress.includes(".") && toAddress.length > 3 && !resolvedAddress && (
-          <p className="text-xs text-destructive">
-            Could not resolve ENS name
-          </p>
-        )}
-      </div>
+      </fieldset>
 
-      {/* Row 3: Destination */}
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground text-xs">as</span>
-        <TokenSelect
-          value={toTokenSymbol}
-          onChange={setToTokenSymbol}
-          options={RECEIVE_TOKENS.map((token) => ({
-            value: token.symbol,
-            label: token.symbol,
-            symbol: token.symbol,
-          }))}
-        />
-        <span className="text-muted-foreground text-xs">on</span>
-        <ChainSelect
-          value={toChainId}
-          onChange={setToChainId}
-          options={Object.values(SUPPORTED_CHAINS).map((chain) => ({
-            value: chain.id,
-            label: chain.displayName,
-            chainId: chain.id,
-          }))}
-        />
-      </div>
-
-      {/* Row 4: Quote + Send */}
-      <div className="flex items-center gap-2">
-        {loadingQuote && (
-          <>
-            <div className="h-3 w-3 animate-spin rounded-full border border-muted-foreground border-t-transparent" />
-            <span className="text-xs text-muted-foreground">Finding route...</span>
-          </>
-        )}
-        {quote && !loadingQuote && (
-          <span className="text-xs text-muted-foreground">
-            Receives ~{(parseFloat(quote.estimate.toAmountMin) / 10 ** quote.action.toToken.decimals).toFixed(2)} {quote.action.toToken.symbol} (${(
-              quote.estimate.feeCosts.reduce((sum, f) => sum + parseFloat(f.amountUSD || "0"), 0) +
-              quote.estimate.gasCosts.reduce((sum, g) => sum + parseFloat(g.amountUSD || "0"), 0)
-            ).toFixed(2)} fee)
-          </span>
-        )}
-        <div className="flex-1" />
-        <Button
-          size="sm"
-          className="h-7 px-4"
-          disabled={!quote || loadingQuote || ["approving", "sending", "confirming"].includes(txStatus)}
-          onClick={executeSend}
-        >
-          {txStatus === "approving" ? "Approving..." :
-           txStatus === "sending" ? "Sending..." :
-           txStatus === "confirming" ? "Confirming..." :
-           "Send"}
-        </Button>
-        {onCancel && (
-          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={onCancel} disabled={["approving", "sending", "confirming"].includes(txStatus)}>
-            x
-          </Button>
-        )}
-      </div>
-
-      {/* Status/Error row - only show if needed */}
-      {quoteError && <p className="text-xs text-destructive">{quoteError}</p>}
-      {txStatus !== "idle" && (
-        <div className="flex items-center gap-2 text-xs">
-          {txStatus === "error" ? (
-            <span className="text-destructive">{txError || "Failed"}</span>
-          ) : (
+      {/* Quote + Actions row */}
+      <div className="flex items-center gap-3 justify-between">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          {loadingQuote && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+              <span>Finding route...</span>
+            </div>
+          )}
+          {quoteError && <span className="text-destructive">{quoteError}</span>}
+          {quote && !loadingQuote && (
             <>
-              <div className="h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" />
-              <span>
-                {txStatus === "approving" && "Approving token..."}
-                {txStatus === "sending" && "Sending..."}
-                {txStatus === "confirming" && "Confirming..."}
+              <span className="flex items-center gap-1">
+                <span className="text-muted-foreground">Receives</span>
+                <TokenIcon symbol={quote.action.toToken.symbol} size={14} />
+                <span className="font-mono font-medium">
+                  {(parseFloat(quote.estimate.toAmountMin) / 10 ** quote.action.toToken.decimals).toFixed(2)} {quote.action.toToken.symbol}
+                </span>
+              </span>
+              <span className="text-muted-foreground">
+                Fee ${(
+                  quote.estimate.feeCosts.reduce((sum, f) => sum + parseFloat(f.amountUSD || "0"), 0) +
+                  quote.estimate.gasCosts.reduce((sum, g) => sum + parseFloat(g.amountUSD || "0"), 0)
+                ).toFixed(2)}
+              </span>
+              {quote.estimate.executionDuration > 0 && (
+                <span className="text-muted-foreground">
+                  ~{Math.ceil(quote.estimate.executionDuration / 60)} min
+                </span>
+              )}
+              <span className="relative group">
+                <span className="text-muted-foreground cursor-help border-b border-dotted border-muted-foreground">?</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-popover border border-border rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  Route: {quote.tool}
+                </span>
               </span>
             </>
           )}
         </div>
+
+        <div className="grid grid-cols-3 gap-2 shrink-0 w-48">
+          <Button
+            className="col-span-2"
+            disabled={!quote || loadingQuote || ["approving", "sending", "confirming"].includes(txStatus)}
+            onClick={executeSend}
+          >
+            {txStatus === "approving" ? "Approving..." :
+             txStatus === "sending" ? "Sending..." :
+             txStatus === "confirming" ? "Confirming..." :
+             "Send"}
+          </Button>
+          {onCancel && (
+            <Button variant="outline" onClick={onCancel} disabled={["approving", "sending", "confirming"].includes(txStatus)}>
+              Cancel
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Transaction Status - only show errors */}
+      {txStatus === "error" && (
+        <p className="text-xs text-destructive">{txError || "Transaction failed"}</p>
       )}
     </div>
   );
