@@ -46,3 +46,14 @@ export interface ChainConfig {
   lifiChainId: number;
   usdcAddress: string;
 }
+
+export interface ParsedPaymentIntent {
+  amount: string | null;
+  token: string | null;
+  recipient: string | null;
+  fromChain: string | null;
+  destinationChain: string | null;
+  confidence: "high" | "medium" | "low";
+  missingFields: string[];
+  originalInput: string;
+}

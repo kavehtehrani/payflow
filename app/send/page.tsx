@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createPublicClient, http } from "viem";
 import { normalize } from "viem/ens";
 import { mainnet } from "viem/chains";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,10 +84,11 @@ interface Quote {
 
 type TxStatus = "idle" | "approving" | "sending" | "confirming" | "success" | "error";
 
-export default function SendPage() {
+function SendPageContent() {
   const { ready, authenticated } = usePrivy();
   const { wallets } = useWallets();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Get active wallet
   const activeWallet = wallets.find((w) => w.walletClientType !== "privy") || wallets[0];
@@ -118,12 +118,63 @@ export default function SendPage() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [txError, setTxError] = useState<string | null>(null);
 
+  // URL params tracking
+  const [urlParamsApplied, setUrlParamsApplied] = useState(false);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/");
     }
   }, [ready, authenticated, router]);
+
+  // Handle URL params on mount
+  useEffect(() => {
+    if (urlParamsApplied) return;
+
+    const amountParam = searchParams.get("amount");
+    const tokenParam = searchParams.get("token");
+    const toParam = searchParams.get("to");
+    const chainParam = searchParams.get("chain");
+    const fromParam = searchParams.get("from");
+
+    if (amountParam || tokenParam || toParam || chainParam || fromParam) {
+      if (amountParam) setAmount(amountParam);
+      if (toParam) setToAddress(toParam);
+      if (tokenParam) setToTokenSymbol(tokenParam.toUpperCase());
+      if (chainParam) {
+        const chain = Object.values(SUPPORTED_CHAINS).find(
+          (c) => c.name.toLowerCase() === chainParam.toLowerCase()
+        );
+        if (chain) setToChainId(chain.id);
+      }
+      // fromParam will be handled when balances load
+      setUrlParamsApplied(true);
+    }
+  }, [searchParams, urlParamsApplied]);
+
+  // Apply fromParam when balances are available
+  useEffect(() => {
+    const fromParam = searchParams.get("from");
+    const tokenParam = searchParams.get("token");
+
+    if (fromParam && balances.length > 0 && !selectedBalance) {
+      const targetChain = Object.values(SUPPORTED_CHAINS).find(
+        (c) => c.name.toLowerCase() === fromParam.toLowerCase()
+      );
+      if (targetChain) {
+        const targetToken = tokenParam?.toUpperCase() || "USDC";
+        const matchingBalance = balances.find(
+          (b) =>
+            b.chainId === targetChain.id &&
+            b.symbol.toUpperCase() === targetToken
+        );
+        if (matchingBalance) {
+          setSelectedBalance(matchingBalance);
+        }
+      }
+    }
+  }, [searchParams, balances, selectedBalance]);
 
   // Fetch balances
   const fetchBalances = useCallback(async () => {
@@ -420,19 +471,12 @@ export default function SendPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Send</h1>
-        <p className="text-sm text-muted-foreground">
-          Send any token to anyone on any chain.
-        </p>
-      </div>
-
       {/* Source Token Selection */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">From</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <fieldset className="relative rounded-lg border border-border p-4 pt-3">
+        <legend className="px-2 text-sm font-medium text-muted-foreground">
+          Send from
+        </legend>
+        <div>
           {loadingBalances ? (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Skeleton className="h-16" />
@@ -545,15 +589,15 @@ export default function SendPage() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </fieldset>
 
       {/* Amount Input */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Amount</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <fieldset className="relative rounded-lg border border-border p-4 pt-3">
+        <legend className="px-2 text-sm font-medium text-muted-foreground">
+          Amount
+        </legend>
+        <div className="space-y-2">
           <div className="flex gap-2">
             <Input
               type="number"
@@ -581,15 +625,15 @@ export default function SendPage() {
               Available: {formatTokenAmount(selectedBalance.amount, selectedBalance.decimals)} {selectedBalance.symbol}
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </fieldset>
 
       {/* Recipient */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">To</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <fieldset className="relative rounded-lg border border-border p-4 pt-3">
+        <legend className="px-2 text-sm font-medium text-muted-foreground">
+          Send to
+        </legend>
+        <div className="space-y-3">
           <div>
             <Input
               id="toAddress"
@@ -646,16 +690,16 @@ export default function SendPage() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </fieldset>
 
       {/* Quote Preview */}
       {(loadingQuote || quote || quoteError) && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Quote</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <fieldset className="relative rounded-lg border border-border p-4 pt-3">
+          <legend className="px-2 text-sm font-medium text-muted-foreground">
+            Quote
+          </legend>
+          <div>
             {loadingQuote ? (
               <div className="flex items-center gap-2 py-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -698,14 +742,13 @@ export default function SendPage() {
                 )}
               </div>
             ) : null}
-          </CardContent>
-        </Card>
+          </div>
+        </fieldset>
       )}
 
       {/* Transaction Status */}
       {txStatus !== "idle" && (
-        <Card>
-          <CardContent className="py-4">
+        <div className="rounded-lg border border-border p-4">
             {txStatus === "approving" && (
               <div className="flex items-center gap-3">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -760,8 +803,7 @@ export default function SendPage() {
                 {txError && <p className="text-sm text-muted-foreground">{txError}</p>}
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Send Button */}
@@ -780,5 +822,13 @@ export default function SendPage() {
           : `Send ${amount || "0"} ${selectedBalance?.symbol || "tokens"}`}
       </Button>
     </div>
+  );
+}
+
+export default function SendPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-xl px-4 py-6"><Skeleton className="h-96" /></div>}>
+      <SendPageContent />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { PaymentChatBot } from "@/components/PaymentChatBot";
 
 export default function Home() {
   const { ready, authenticated, login } = usePrivy();
@@ -31,8 +32,8 @@ export default function Home() {
           AI-powered cross-chain payments
         </div>
 
-        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.1]">
-          Pay invoices
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
+          Pay anyone
           <br />
           <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             across any chain
@@ -40,37 +41,46 @@ export default function Home() {
         </h1>
 
         <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Upload an invoice. AI extracts the details. Pay from wherever your
-          funds are to wherever the recipient wants to be paid.
+          Just tell me who to pay and how much. I'll handle the rest.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        {/* Chat Bot - Main Feature */}
+        <div className="pt-4 w-full">
+          <PaymentChatBot />
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
           {ready && authenticated ? (
             <>
               <Button
                 size="lg"
+                variant="outline"
                 className="w-full sm:w-auto px-8 text-base"
                 onClick={() => router.push("/upload")}
               >
-                Pay an Invoice
+                Upload Invoice
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto px-8 text-base"
+                onClick={() => router.push("/send")}
+              >
+                Manual Send
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                className="w-full sm:w-auto px-8 text-base"
                 onClick={() => router.push("/dashboard")}
               >
-                View Dashboard
+                Dashboard
               </Button>
             </>
           ) : ready ? (
-            <Button
-              size="lg"
-              className="px-10 text-base"
-              onClick={login}
-            >
-              Get Started
-            </Button>
+            <p className="text-sm text-muted-foreground">
+              Connect your wallet to send payments
+            </p>
           ) : null}
         </div>
 
