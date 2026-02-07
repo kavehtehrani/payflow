@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 
-function AuthSection() {
+function useAuth() {
   const { ready, authenticated, login, logout } = usePrivy();
   const { wallets } = useWallets();
 
@@ -20,6 +20,12 @@ function AuthSection() {
   const shortAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
     : null;
+
+  return { ready, authenticated, login, logout, shortAddress };
+}
+
+function AuthSection() {
+  const { ready, authenticated, login, logout, shortAddress } = useAuth();
 
   if (!ready) return null;
 
@@ -53,9 +59,39 @@ const navLinks = [
   { href: "/contact", label: "Contacts" },
 ];
 
+function NavLink({ href, label, isActive, authenticated, login }: {
+  href: string;
+  label: string;
+  isActive: boolean;
+  authenticated: boolean;
+  login: () => void;
+}) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (!authenticated) {
+      e.preventDefault();
+      login();
+    }
+  };
+
+  return (
+    <Link
+      href={href}
+      onClick={handleClick}
+      className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+        isActive
+          ? "bg-muted text-foreground font-medium"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [privyAvailable, setPrivyAvailable] = useState(false);
+  const { ready, authenticated, login } = useAuth();
 
   useEffect(() => {
     setPrivyAvailable(!!process.env.NEXT_PUBLIC_PRIVY_APP_ID);
@@ -79,17 +115,14 @@ export default function Header() {
           </Link>
           <nav className="flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link
+              <NavLink
                 key={link.href}
                 href={link.href}
-                className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                  pathname === link.href
-                    ? "bg-muted text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                {link.label}
-              </Link>
+                label={link.label}
+                isActive={pathname === link.href}
+                authenticated={!privyAvailable || !ready || authenticated}
+                login={login}
+              />
             ))}
           </nav>
         </div>
