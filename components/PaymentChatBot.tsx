@@ -5,7 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { EmbeddedSendForm } from "@/components/EmbeddedSendForm";
+import { EmbeddedSendForm, type PaymentResult } from "@/components/EmbeddedSendForm";
 import type { ParsedPaymentIntent, ParsedInvoice } from "@/lib/types";
 
 interface Message {
@@ -16,10 +16,11 @@ interface Message {
   showForm?: boolean;
   fileName?: string;
   filePreview?: string;
+  invoiceId?: string;
 }
 
 export function PaymentChatBot() {
-  const { ready, authenticated, login } = usePrivy();
+  const { ready, authenticated, login, user } = usePrivy();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -125,7 +126,41 @@ export function PaymentChatBot() {
     }
   };
 
-  const handlePaymentSuccess = (messageId: string) => {
+  const handlePaymentSuccess = async (messageId: string, result?: PaymentResult) => {
+    // Find the message to get the invoice ID
+    const message = messages.find((m) => m.id === messageId);
+    const invoiceId = message?.invoiceId;
+
+    // Update invoice status and create payment record
+    if (invoiceId && result) {
+      try {
+        // Update invoice status to paid
+        await fetch("/api/invoices", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: invoiceId, status: "paid" }),
+        });
+
+        // Create payment record
+        await fetch("/api/payments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            invoiceId,
+            txHash: result.txHash,
+            fromChain: result.fromChain,
+            toChain: result.toChain,
+            fromToken: result.fromToken,
+            toToken: result.toToken,
+            amount: result.toAmount,
+            status: "completed",
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to record payment:", err);
+      }
+    }
+
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === messageId ? { ...msg, showForm: false } : msg
@@ -201,8 +236,14 @@ export function PaymentChatBot() {
       const formData = new FormData();
       formData.append("file", file);
 
+      const headers: HeadersInit = {};
+      if (user?.id) {
+        headers["x-user-id"] = user.id;
+      }
+
       const res = await fetch("/api/parse-invoice", {
         method: "POST",
+        headers,
         body: formData,
       });
 
@@ -211,6 +252,7 @@ export function PaymentChatBot() {
       }
 
       const data = await res.json();
+      const invoiceId: string = data.invoiceId;
       const invoice: ParsedInvoice = data.parsedData;
 
       // Convert ParsedInvoice to ParsedPaymentIntent
@@ -259,6 +301,7 @@ export function PaymentChatBot() {
             content: responseContent,
             intent,
             showForm: true,
+            invoiceId,
           },
         ]);
       }
@@ -326,7 +369,7 @@ export function PaymentChatBot() {
                     ) : (
                       <EmbeddedSendForm
                         intent={message.intent}
-                        onSuccess={() => handlePaymentSuccess(message.id)}
+                        onSuccess={(result) => handlePaymentSuccess(message.id, result)}
                         onCancel={() => handleCancel(message.id)}
                       />
                     )}
