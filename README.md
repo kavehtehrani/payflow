@@ -1,10 +1,10 @@
+# PayFlow
+
 <p align="center">
   <img src="public/logo-with-text.svg" alt="PayFlow" width="200">
 </p>
 
-# PayFlow
-
-An AI-powered crypto payment application for paying anyone on any chain. 
+An AI-powered crypto payment application for paying anyone on an chain. 
 
 _This is a hackathon project as part of [HackMoney 2026](https://ethglobal.com/events/hackmoney2026/)._
 
