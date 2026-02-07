@@ -198,6 +198,15 @@ export default function DashboardPage() {
                           ? `${inv.parsedData.amount} ${inv.parsedData.token} to ${inv.parsedData.recipientAddress}`
                           : inv.rawFileName || "No data"}
                       </span>
+                      {inv.parsedData?.dueDate && (
+                        <span className={`shrink-0 text-xs ${
+                          new Date(inv.parsedData.dueDate) < new Date() && inv.status !== "paid"
+                            ? "text-destructive font-medium"
+                            : ""
+                        }`}>
+                          Due {formatDate(inv.parsedData.dueDate)}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
