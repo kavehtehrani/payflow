@@ -20,7 +20,7 @@ PayFlow simplifies crypto payments by combining invoice parsing, cross-chain tra
 - **Contact Management**: Save addresses with ENS profile data for quick repeat payments.
 - **Invoice Generation**: Create invoices with your wallet address and share them for payment.
 
-## Demo
+## Demo (YouTube)
 
 [![Payflow Demo](https://img.youtube.com/vi/eulLa3soZZY/1.jpg)](https://youtu.be/eulLa3soZZY)
 
